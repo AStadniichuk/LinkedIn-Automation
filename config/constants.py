@@ -23,7 +23,7 @@ class LinkedInButtons:
     FIRST_CONTACT_FILTER = "1-й"
 
     CONNECT_BUTTON = "Установить контакт"
-    SEND_BUTTON = "Отправить"
+    SEND_BUTTON = "Отправить без заметки"
     NEXT_BUTTON = "Далее"
     SHOW_RESULT_BUTTON = "Показать результаты"
 

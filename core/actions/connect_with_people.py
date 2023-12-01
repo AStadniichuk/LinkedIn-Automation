@@ -2,6 +2,7 @@ from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.remote.webelement import WebElement
 
 from config.constants import LinkedInSelectors, LinkedInPopups
 from core.utils.wait_methods import WebDriverWaitMethods
@@ -41,7 +42,8 @@ class ConnectWithPeople(WebDriverWaitMethods):
         for _ in range(self.page_limit):
             try:
                 make_contact_buttons = self.wait_and_get_elements(By.XPATH,
-                                                                  LinkedInSelectors.MAKE_CONTACT_BUTTON_XPATH)
+                                                                  LinkedInSelectors.MAKE_CONTACT_BUTTON_XPATH,
+                                                                  timeout=3)
                 if make_contact_buttons:
                     self.__make_contact(make_contact_buttons)
             except TimeoutException:
@@ -60,7 +62,7 @@ class ConnectWithPeople(WebDriverWaitMethods):
                                              LinkedInPopups.POPUP_WINDOW_SET_CONTACT_XPATH,
                                              timeout=1)
 
-        message = 'Чтобы подтвердить, что этот участник вас знает, укажите его(ее) адрес эл. почты для установления контакта. Вы также можете добавить личное сообщение в свое приглашение'
+        message = 'Чтобы подтвердить, что этот участник вас знает, укажите его(ее) адрес эл. почты'
 
         if message in popup_window.text:
             self.wait_and_click(By.XPATH, LinkedInSelectors.SKIP_BUTTON_XPATH)
@@ -70,18 +72,21 @@ class ConnectWithPeople(WebDriverWaitMethods):
 
     def __handle_popup_window(self):
         """Handle LinkedIn popup window and quit the driver if found."""
-        popup_window = WebDriverWait(self.driver, 1).until(
-            expected_conditions.presence_of_element_located(
-                (By.XPATH, LinkedInPopups.POPUP_WINDOW_XPATH)))
+        try:
+            popup_window: WebElement = WebDriverWait(self.driver, 1).until(
+                expected_conditions.presence_of_element_located(
+                    (By.XPATH, LinkedInPopups.POPUP_WINDOW_XPATH)))
+            message = 'Достигнуто максимально допустимое число приглашений в неделю'
+            if message in popup_window.text:
+                print(message)
+                self.driver.quit()
 
-        message = 'Достигнуто максимально допустимое число приглашений в неделю'
-        if message in popup_window.text:
-            print(message)
-            self.driver.quit()
+            popup_html = popup_window.get_attribute('outerHTML')
+            print(popup_window.text, popup_html, sep='\n')
+            self.wait_and_click(By.XPATH, LinkedInSelectors.OK_BUTTON_XPATH)
 
-        popup_html = popup_window.get_attribute('outerHTML')
-        print(popup_window.text, popup_html, sep='\n')
-        self.wait_and_click(By.XPATH, LinkedInSelectors.OK_BUTTON_XPATH)
+        except TimeoutException:
+            pass
 
     def __scroll_and_click_next(self):
         """Scroll down and click 'Next' button to navigate to the next page."""
